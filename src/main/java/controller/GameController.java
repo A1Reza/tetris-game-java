@@ -14,32 +14,31 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-
 public class GameController implements Initializable {
 
     @FXML
-    Pane gamePane, paneNextBrick;
-
-
+    private Pane gamePane, paneNextBrick, paneFalling;
     @FXML
-    Button btnStart, btnBack;
-
+    private Button btnStart, btnBack;
     @FXML
-    Label lblLevel, lblScore, lblHeart;
+    private Label lblLevel, lblScore, lblHeart;
 
-
-    Tetris tetris;
-    boolean isGameStarted = false;
+    private Tetris tetris;
+    private boolean isGameStarted = false;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         tetris = Tetris.tetris;
         tetris._init();
+
+        // Refresh settings from disk so background-color changes take effect.
+        tetris.getSettingsManager().load(false);
+
         GameBoard gameBoard = new GameBoard(tetris.getLevel(), tetris);
         tetris.setGameBoard(gameBoard);
         gameBoard.setNextPane(paneNextBrick);
+        gameBoard.setFallingPane(paneFalling);
         gameBoard.paint(gamePane);
-
 
         btnStart.setOnAction(event -> {
             if (!isGameStarted && btnStart.getText().equals("Start")) {
@@ -64,7 +63,6 @@ public class GameController implements Initializable {
         gameBoard.setLblHeart(lblHeart);
         gameBoard.setLblLevel(lblLevel);
 
-
         btnBack.setOnAction(event -> {
             try {
                 ChangeScene.setScene(gamePane, StageProperty.MAIN_MENU_PATH, "Tetris");
@@ -72,17 +70,13 @@ public class GameController implements Initializable {
                 e.printStackTrace();
             }
         });
-
-
     }
-
 
     @FXML
     private void sceneKeyListeners(KeyEvent event) {
         if (isGameStarted) {
+            event.consume();
             tetris.getGameBoard().sceneKeyListeners(event);
         }
     }
-
-
 }

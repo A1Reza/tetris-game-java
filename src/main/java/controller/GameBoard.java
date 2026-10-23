@@ -16,26 +16,39 @@ import model.Player;
 import model.breaks.*;
 import view.Tetris;
 
-import java.awt.*;
+import java.awt.Point;
 import java.util.*;
-
 
 public class GameBoard {
     private final int row = 20;
     private final int column = 15;
-    private final boolean[][] isFilled = new boolean[row][column];
     private State state;
-    private final Color bgColor;
+    private Color bgColor;
     private int level;
     private final int brickSize = 20;
     private final Tetris tetris;
+
     private Pane nextPane;
-    Rectangle[][] rectangles = new Rectangle[column][row];
+    private Pane fallingPane;
+    private final Rectangle[][] rectangles = new Rectangle[column][row];
+
+    private Point pieceOrigin;
+    private final ArrayList<Integer> nextPieces = new ArrayList<>();
+    private final ArrayList<Brick> bricks = new ArrayList<>();
+    private Color[][] well;
+    private Pane pane;
+    private Brick brick;
+    private Timer timer;
+    private volatile boolean isGameOver = false;
+    private volatile boolean isProcessingCollision = false;
+    private boolean gameOverPopupShown = false;
+
+    private Label lblScore, lblHeart, lblLevel;
 
     public GameBoard(int level, Tetris tetris) {
         this.level = level;
         this.tetris = tetris;
-        bgColor = tetris.getSettingsManager().getBgColor();
+        this.bgColor = tetris.getSettingsManager().getBgColor();
 
         pieceOrigin = new Point(5, 2);
         bricks.add(new Brick_0(this, pieceOrigin));
@@ -50,17 +63,35 @@ public class GameBoard {
     }
 
     public void start() {
+        if (isGameOver) return;
+
         state = State.START;
         pieceOrigin = new Point(5, 2);
-        if (nextPieces.size() <= 1) {
-            Collections.addAll(nextPieces, 0, 1, 2, 3, 4, 5, 6, 7, 8);
-            Collections.shuffle(nextPieces);
+
+        while (nextPieces.size() < 2) {
+            ArrayList<Integer> bag = new ArrayList<>();
+            for (int i = 0; i < bricks.size(); i++) bag.add(i);
+            Collections.shuffle(bag);
+            nextPieces.addAll(bag);
         }
-        brick = bricks.get(nextPieces.get(0));
+
+        brick = bricks.get(nextPieces.remove(0));
         brick.setRotation(0);
-        brick.paint(pane, pieceOrigin, false);
-        nextPieces.remove(0);
-        //next brick
+        brick.setPoint(pieceOrigin);
+
+        // Spawn-time collision check: if the new piece cannot be placed at all,
+        // the game is truly over.
+        brick.makePointsFromBooleansForCurrent();
+        if (!brick.collidesAt(pieceOrigin.x, pieceOrigin.y)) {
+            // Can't even place the new piece -> game over
+            isGameOver = true;
+            isProcessingCollision = false;
+            setupGameOver();
+            return;
+        }
+
+        drawFallingBrick();
+
         Brick brickNext = bricks.get(nextPieces.get(0));
         brickNext.setRotation(0);
         brickNext.paint(nextPane, new Point(0, 0), true);
@@ -68,55 +99,48 @@ public class GameBoard {
         startThread();
     }
 
-    Timer timer;
+    private void drawFallingBrick() {
+        if (fallingPane == null) return;
+        brick.paint(fallingPane, pieceOrigin, false);
+    }
 
     private void startThread() {
-        int period = 1000 / level;
-        timer = new Timer();
-        class Timer extends TimerTask {
+        if (timer != null) {
+            timer.cancel();
+            timer.purge();
+            timer = null;
+        }
+
+        int period = 1000 / Math.max(level, 1);
+        final Timer localTimer = new Timer(true);
+        timer = localTimer;
+        localTimer.schedule(new TimerTask() {
+            @Override
             public void run() {
-                if (isGameOver) {
-                    timer.cancel();
-                    return;
-                }
                 Platform.runLater(() -> {
+                    if (timer != localTimer || state == State.STOP || isGameOver) {
+                        localTimer.cancel();
+                        return;
+                    }
+                    if (isProcessingCollision) return;
                     if (moveDown(false)) {
-                        if (state == State.STOP)
-                            timer.cancel();
-//                        Platform.runLater(GameBoard.this::repaint);
                         repaint();
                     } else {
-                        timer.cancel();
+                        localTimer.cancel();
                     }
                 });
-
             }
-        }
-        timer.schedule(new Timer(), 1000, period);
+        }, 1000, period);
     }
 
     public void stop() {
         state = State.STOP;
     }
 
-
-//    public boolean isFilled(int x, int y) {
-//        return true;
-//    }
-//
-//    public void fill(int x, int y) {
-//
-//    }
-
-    private Point pieceOrigin;
-    private final ArrayList<Integer> nextPieces = new ArrayList<>();
-    private final ArrayList<Brick> bricks = new ArrayList<>();
-    private Color[][] well;
-
-    private Pane pane;
-
     public void paint(Pane gamePane) {
         this.pane = gamePane;
+        this.bgColor = tetris.getSettingsManager().getBgColor();
+
         well = new Color[column][row];
         for (int i = 0; i < column; i++) {
             for (int j = 0; j < row; j++) {
@@ -130,78 +154,67 @@ public class GameBoard {
 
         gamePane.setMinSize(brickSize * column, brickSize * row);
         gamePane.setMaxSize(brickSize * column, brickSize * row);
-        Rectangle rectangle = new Rectangle(brickSize * column, brickSize * row);
-        rectangle.setFill(Color.color(0, 0, 0, 0.8));
-//        rectangle.setFill(manager.getBgColor());
-        gamePane.getChildren().add(rectangle);
+        if (fallingPane != null) {
+            fallingPane.setMinSize(brickSize * column, brickSize * row);
+            fallingPane.setMaxSize(brickSize * column, brickSize * row);
+        }
+
+        // FIX: clear previous content so restarts don't duplicate rectangles
+        gamePane.getChildren().clear();
+
+        Rectangle background = new Rectangle(brickSize * column, brickSize * row);
+        background.setFill(Color.color(0, 0, 0, 0.8));
+        gamePane.getChildren().add(background);
 
         addRects();
-
     }
 
-
     private void repaint() {
-//        addRects();
-        for (int i = 1; i < column - 1; i++) {
-            for (int j = 1; j < row - 1; j++) {
-                if (rectangles[i][j].getFill() == well[i][j]) {
-//                    rectangles[i][j].setFill(well[i][j]);
-                    pane.getChildren().remove(rectangles[i][j]);
-                    pane.getChildren().add(rectangles[i][j]);
+        for (int i = 0; i < column; i++) {
+            for (int j = 0; j < row; j++) {
+                if (rectangles[i][j] != null) {
+                    rectangles[i][j].setFill(well[i][j]);
                 }
             }
         }
-
-        brick.paint(pane, pieceOrigin, false);
+        drawFallingBrick();
         setLevelUp();
         refreshLabels();
     }
 
     private void setLevelUp() {
         int lvl;
-        if (tetris.getScore() > 0) {
-            int removedLines = tetris.getScore() / tetris.getSettingsManager().getScorePerRow();
-            if (removedLines == 3) {
-                lvl = 2;
-            } else if (removedLines == 6) {
-                lvl = 3;
-            } else if (removedLines == 9) {
-                lvl = 4;
-            } else if (removedLines == 12) {
-                lvl = 5;
-            } else if (removedLines == 15) {
-                lvl = 6;
-            } else if (removedLines == 20) {
-                lvl = 7;
-            } else if (removedLines == 25) {
-                lvl = 8;
-            } else if (removedLines == 30) {
-                lvl = 9;
-            } else if (removedLines >= 40) {
-                lvl = 10;
-            } else {
-                return;
-            }
+        int scorePerRow = tetris.getSettingsManager().getScorePerRow();
+        int removedLines = scorePerRow > 0 ? tetris.getScore() / scorePerRow : 0;
 
-            lvl = lvl + tetris.getSettingsManager().getStartLevel() - 1;
+        if (removedLines >= 40) lvl = 10;
+        else if (removedLines >= 30) lvl = 9;
+        else if (removedLines >= 25) lvl = 8;
+        else if (removedLines >= 20) lvl = 7;
+        else if (removedLines >= 15) lvl = 6;
+        else if (removedLines >= 12) lvl = 5;
+        else if (removedLines >= 9) lvl = 4;
+        else if (removedLines >= 6) lvl = 3;
+        else if (removedLines >= 3) lvl = 2;
+        else return;
 
-            level = lvl;
-            tetris.setLevel(lvl);
-        }
+        lvl = lvl + tetris.getSettingsManager().getStartLevel() - 1;
+        level = lvl;
+        tetris.setLevel(lvl);
     }
 
     private void addRects() {
         Lighting lighting = new Lighting();
         for (int i = 0; i < column; i++) {
             for (int j = 0; j < row; j++) {
-                Rectangle rectangle = new Rectangle(brickSize * i, brickSize * j, brickSize - 1, brickSize - 1);
+                Rectangle rectangle = new Rectangle(
+                        brickSize * i, brickSize * j, brickSize - 1, brickSize - 1);
                 rectangle.setFill(well[i][j]);
                 rectangle.setEffect(lighting);
                 pane.getChildren().add(rectangle);
                 rectangles[i][j] = rectangle;
             }
         }
-
         for (int i = 0; i < column; i++) {
             Rectangle rectangle = new Rectangle(brickSize * i, 0, brickSize - 1, brickSize - 1);
             rectangle.setFill(Color.GRAY);
@@ -214,17 +227,20 @@ public class GameBoard {
         return well;
     }
 
-    private Brick brick;
+    public void setWell(Color[][] well) {
+        this.well = well;
+    }
 
     public boolean move(Direction direction, Point pieceOrigin) {
+        if (isGameOver) return false;
         if (direction == Direction.LEFT) {
-            if (brick.collidesAt(pieceOrigin.x + -1, pieceOrigin.y)) {
-                pieceOrigin.x += -1;
+            if (brick.collidesAt(pieceOrigin.x - 1, pieceOrigin.y)) {
+                pieceOrigin.x -= 1;
                 return true;
             }
         } else if (direction == Direction.RIGHT) {
-            if (brick.collidesAt(pieceOrigin.x + +1, pieceOrigin.y)) {
-                pieceOrigin.x += +1;
+            if (brick.collidesAt(pieceOrigin.x + 1, pieceOrigin.y)) {
+                pieceOrigin.x += 1;
                 return true;
             }
         }
@@ -232,56 +248,58 @@ public class GameBoard {
     }
 
     public boolean moveDown(boolean isFromEnter) {
+        if (isGameOver) return false;
         if (brick.collidesAt(pieceOrigin.x, pieceOrigin.y + 1)) {
             if (isFromEnter) {
                 while (brick.collidesAt(pieceOrigin.x, pieceOrigin.y + 1)) {
-                    pieceOrigin.y += +1;
+                    pieceOrigin.y += 1;
                 }
             } else {
-                pieceOrigin.y += +1;
+                pieceOrigin.y += 1;
             }
             return true;
         } else {
             fixToWell();
-
-            //cancel timer for press enter bug fix
-            if (timer != null) {
-                timer.cancel();
-            }
-
             return false;
         }
     }
 
-    boolean isGameOver = false;
-
     private void fixToWell() {
-        if (isGameOver) {
-            return;
-        }
-        if (brick.getPoint().y == 2) {
-            isGameOver = true;
-            setupGameOver();
-            return;
-        }
+        if (isGameOver || isProcessingCollision) return;
+        isProcessingCollision = true;
 
         brick.freeze(well);
+        isProcessingCollision = false;
         start();
     }
 
     private void setupGameOver() {
-        if (tetris.getHeart() == 1) {
-            if (!isHighScore()) {
+        // Stop the timer immediately so nothing else runs while we show UI.
+        if (timer != null) {
+            timer.cancel();
+            timer.purge();
+            timer = null;
+        }
+        state = State.STOP;
+
+        if (gameOverPopupShown) {
+            return;
+        }
+        gameOverPopupShown = true;
+
+        if (tetris.getHeart() <= 1) {
+            boolean saved = isHighScore();
+            if (!saved) {
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Game Over");
                 alert.setHeaderText(null);
                 alert.setContentText("YOU LOSE AND NOT IN TOP 10!");
                 alert.showAndWait();
-                tetris.setHeart(3);
-                tetris.setScore(0);
-                refreshLabels();
-                restart();
             }
+            tetris.setHeart(3);
+            tetris.setScore(0);
+            refreshLabels();
+            restart();
         } else {
             tetris.setHeart(tetris.getHeart() - 1);
             refreshLabels();
@@ -290,14 +308,16 @@ public class GameBoard {
     }
 
     private void refreshLabels() {
-        lblScore.setText("Score: " + tetris.getScore());
-        lblHeart.setText("Heart: " + tetris.getHeart());
-        lblLevel.setText("level: " + tetris.getLevel());
+        if (lblScore != null) lblScore.setText("Score: " + tetris.getScore());
+        if (lblHeart != null) lblHeart.setText("Heart: " + tetris.getHeart());
+        if (lblLevel != null) lblLevel.setText("level: " + tetris.getLevel());
     }
 
     private void restart() {
         pieceOrigin = new Point(5, 2);
         isGameOver = false;
+        isProcessingCollision = false;
+        gameOverPopupShown = false;
         level = tetris.getSettingsManager().getStartLevel();
         tetris.setLevel(level);
         paint(pane);
@@ -309,26 +329,19 @@ public class GameBoard {
         manager.load();
         ArrayList<Player> players = manager.getPlayers();
 
-        if (players.size() < 10) {
-            return saveScore(manager);
-        } else {
-            //sort players list des on score
+        if (players.size() >= 10) {
             players.sort(Comparator.comparing(Player::getScore).reversed());
-
-            //on top 10
-            if (players.get(players.size() - 1).getScore() < tetris.getScore()) {
-                return saveScore(manager);
-            }
+            int tenth = players.get(9).getScore();
+            if (tetris.getScore() <= tenth) return false;
         }
-        return false;
+        return saveScore(manager);
     }
 
     private boolean saveScore(ScoreManager manager) {
         String name = showInputNameDialog();
-        if (!name.equals("")) {
-            manager.addPlayer(name, tetris.getScore());
-            manager.save();
-        }
+        if (name.isEmpty()) return false;
+        manager.addPlayer(name, tetris.getScore());
+        manager.save();
         return true;
     }
 
@@ -338,40 +351,27 @@ public class GameBoard {
         dialog.setHeaderText(" *** New High Score :" + tetris.getScore() + " ***");
         dialog.setContentText("Please enter your name:");
         Optional<String> result = dialog.showAndWait();
-        return result.orElse("");
+        return result.orElse("").trim();
     }
 
     public void sceneKeyListeners(KeyEvent event) {
+        if (isGameOver || isProcessingCollision) return;
+
         if (event.getCode() == KeyCode.UP) {
-            if (brick.rotate(-1)) {
-                repaint();
-            }
+            if (brick.rotate(-1)) repaint();
         } else if (event.getCode() == KeyCode.DOWN) {
-            if (brick.rotate(+1)) {
-                repaint();
-            }
+            if (brick.rotate(+1)) repaint();
         } else if (event.getCode() == KeyCode.LEFT) {
-            if (move(Direction.LEFT, pieceOrigin)) {
-                repaint();
-            }
+            if (move(Direction.LEFT, pieceOrigin)) repaint();
         } else if (event.getCode() == KeyCode.RIGHT) {
-            if (move(Direction.RIGHT, pieceOrigin)) {
-                repaint();
-            }
+            if (move(Direction.RIGHT, pieceOrigin)) repaint();
         } else if (event.getCode() == KeyCode.ENTER) {
-            if (moveDown(true)) {
-                repaint();
-            }
-//          score += 1;
+            if (moveDown(true)) repaint();
         }
     }
 
     public int getRow() {
         return row;
-    }
-
-    public void setWell(Color[][] well) {
-        this.well = well;
     }
 
     public int getBrickSize() {
@@ -394,9 +394,9 @@ public class GameBoard {
         this.nextPane = nextPane;
     }
 
-    private Label lblScore;
-    private Label lblHeart;
-    private Label lblLevel;
+    public void setFallingPane(Pane fallingPane) {
+        this.fallingPane = fallingPane;
+    }
 
     public void setLblScore(Label lblScore) {
         this.lblScore = lblScore;

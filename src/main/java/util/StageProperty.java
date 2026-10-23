@@ -1,6 +1,5 @@
 package util;
 
-
 public class StageProperty {
     public static int WIDTH = 470;
     public static int HEIGHT = 500;

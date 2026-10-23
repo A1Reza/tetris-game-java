@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<AnchorPane prefHeight="300.0" prefWidth="535.0" xmlns="http://javafx.com/javafx/11.0.1"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.ScoreManager">
+    <children>
+        <TableView fx:id="tableScores" editable="true" layoutX="29.0" prefHeight="394.0" prefWidth="486.0"
+                   AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="5.0"
+                   AnchorPane.topAnchor="5.0">
+            <columns>
+                <TableColumn fx:id="colRank" editable="false" prefWidth="152.39995956420898" sortable="false"
+                             text="Rank"/>
+                <TableColumn fx:id="colName" editable="false" prefWidth="208.40003967285156" sortable="false"
+                             text="Name"/>
+                <TableColumn fx:id="colScore" editable="false" prefWidth="76.79998779296875" sortType="DESCENDING"
+                             text="Score"/>
+            </columns>
+            <columnResizePolicy>
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+            </columnResizePolicy>
+        </TableView>
+    </children>
+</AnchorPane>

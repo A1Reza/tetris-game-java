@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<BorderPane onKeyReleased="#sceneKeyListeners" prefHeight="470.0" prefWidth="500.0"
+            style="-fx-background-color: #f4ae91;" xmlns="http://javafx.com/javafx/11.0.1"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.GameController">
+    <right>
+        <BorderPane BorderPane.alignment="CENTER">
+            <bottom>
+                <Button fx:id="btnStart" mnemonicParsing="false" text="Start" BorderPane.alignment="CENTER">
+                    <BorderPane.margin>
+                        <Insets bottom="30.0" left="20.0" right="20.0"/>
+                    </BorderPane.margin>
+                </Button>
+            </bottom>
+            <center>
+                <VBox alignment="TOP_CENTER" spacing="30.0" BorderPane.alignment="CENTER">
+                    <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+                    </padding>
+                    <children>
+                        <VBox alignment="CENTER" spacing="30.0"
+                              style="-fx-border-color: #000000; -fx-border-radius: 5; -fx-background-color: #b0d2a1; -fx-background-radius: 5;">
+                            <children>
+                                <Label fx:id="lblLevel" alignment="CENTER" contentDisplay="CENTER" text="Level"
+                                       textAlignment="CENTER">
+                                    <font>
+                                        <Font size="16.0"/>
+                                    </font>
+                                </Label>
+                                <Label fx:id="lblScore" alignment="CENTER" contentDisplay="CENTER" text="Score"
+                                       textAlignment="CENTER">
+                                    <font>
+                                        <Font size="16.0"/>
+                                    </font>
+                                </Label>
+                                <Label fx:id="lblHeart" alignment="CENTER" contentDisplay="CENTER" text="Heart"
+                                       textAlignment="CENTER">
+                                    <font>
+                                        <Font size="16.0"/>
+                                    </font>
+                                </Label>
+                            </children>
+                            <padding>
+                                <Insets bottom="20.0" top="20.0"/>
+                            </padding>
+                        </VBox>
+                    </children>
+                </VBox>
+            </center>
+            <BorderPane.margin>
+                <Insets/>
+            </BorderPane.margin>
+            <top>
+                <StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
+                           prefHeight="100.0" prefWidth="100.0" style="-fx-border-color: #000000; -fx-border-radius: 5;"
+                           BorderPane.alignment="CENTER">
+                    <children>
+                        <Pane fx:id="paneNextBrick" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity"
+                              minWidth="-Infinity" StackPane.alignment="CENTER">
+                            <StackPane.margin>
+                                <Insets/>
+                            </StackPane.margin>
+                        </Pane>
+                    </children>
+                    <BorderPane.margin>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+                    </BorderPane.margin>
+                </StackPane>
+            </top>
+        </BorderPane>
+    </right>
+    <center>
+        <Pane fx:id="gamePane" style="-fx-background-color: #FFFFFF; -fx-border-color: #000000; -fx-border-width: 5;"
+              BorderPane.alignment="CENTER">
+            <BorderPane.margin>
+                <Insets/>
+            </BorderPane.margin>
+        </Pane>
+    </center>
+    <top>
+        <HBox BorderPane.alignment="CENTER">
+            <children>
+                <Button fx:id="btnBack" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity"
+                        minWidth="-Infinity" mnemonicParsing="false" prefHeight="50.0" prefWidth="50.0"/>
+            </children>
+            <BorderPane.margin>
+                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+            </BorderPane.margin>
+        </HBox>
+    </top>
+</BorderPane>

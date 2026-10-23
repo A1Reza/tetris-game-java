@@ -1,0 +1,88 @@
+.root {
+    -fx-background-color: #fdf1cb;
+}
+
+.button {
+    -fx-background-color: #f4ae91 linear-gradient(#fafdfe, #e8f5fc),
+    linear-gradient(#f3ad90 0%, #f2ac8f 49%, #f37e4e 50%, #f3ad90 100%);
+    -fx-text-fill: black;
+    -fx-font-weight: bold;
+    -fx-pref-width: 165;
+    -fx-pref-height: 32;
+}
+
+#btnStart {
+    -fx-background-color: #f4ae91 linear-gradient(#fafdfe, #e8f5fc),
+    linear-gradient(#f3ad90 0%, #f2ac8f 49%, #f37e4e 50%, #f3ad90 100%);
+    -fx-text-fill: black;
+    -fx-font-weight: bold;
+    -fx-pref-width: 100;
+    -fx-pref-height: 32;
+}
+
+
+#lblHeart, #lblScore, #lblLevel {
+    /*-fx-background-color: #b0d2a1;*/
+    -fx-pref-width: 100;
+}
+
+
+.label {
+    -fx-text-fill: black;
+    -fx-font-family: "Book Antiqua";
+}
+
+
+.table-view .row .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-color: #5b9ad4;
+}
+
+
+.table-view .column-header .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-color: #5b9ad4;
+}
+
+.table-cell {
+    -fx-alignment: center;
+    -fx-font-family: "Tw Cen MT";
+    -fx-font-size: 15;
+}
+
+
+#colName:odd {
+    -fx-background-color: #c4dfb3;
+}
+
+#colName:even {
+    -fx-background-color: #87b46a;
+}
+
+#colRank:odd {
+    -fx-background-color: #d8d8d8;
+}
+
+#colRank:even {
+    -fx-background-color: #a479b8;
+}
+
+#colScore:odd {
+    -fx-background-color: #f3b082;
+}
+
+#colScore:even {
+    -fx-background-color: #e08b50;
+}
+
+#btnBack {
+    -fx-background-image: url("/img/back_arrow.png");
+    -fx-background-color: transparent;
+    -fx-background-position: center;
+    -fx-background-size: 30;
+    -fx-pref-width: 30;
+    -fx-pref-height: 30;
+}
+

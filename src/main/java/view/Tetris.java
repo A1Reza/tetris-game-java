@@ -9,7 +9,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import util.StageProperty;
-
+//
 public class Tetris extends Application {
 
     private SettingsManager settingsManager;

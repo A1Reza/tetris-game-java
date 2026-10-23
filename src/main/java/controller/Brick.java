@@ -6,9 +6,8 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
-import java.awt.*;
+import java.awt.Point;
 import java.util.ArrayList;
-
 
 public class Brick {
     private Point point;
@@ -17,18 +16,22 @@ public class Brick {
     private static final int WIDTH = 3;
     private Color color;
     private boolean[][] isFilled = new boolean[3][3];
-
     private final GameBoard gameBoard;
+    private final int scorePerRow;
+
+    private final ArrayList<Point> listNext = new ArrayList<>();
+    private final ArrayList<Point> listCurrent = new ArrayList<>();
+    private boolean[][] isFilledBeforeRotation;
 
     public Brick(GameBoard gameBoard) {
         this.gameBoard = gameBoard;
-        scorePerRow = gameBoard.getTetris().getSettingsManager().getScorePerRow();
+        this.scorePerRow = gameBoard.getTetris().getSettingsManager().getScorePerRow();
     }
 
     public Brick(GameBoard gameBoard, Point point) {
         this.gameBoard = gameBoard;
         this.point = point;
-        scorePerRow = gameBoard.getTetris().getSettingsManager().getScorePerRow();
+        this.scorePerRow = gameBoard.getTetris().getSettingsManager().getScorePerRow();
     }
 
     public Point getPoint() {
@@ -38,7 +41,6 @@ public class Brick {
     public void setPoint(Point point) {
         this.point = point;
     }
-
 
     public void setRotation(int rotation) {
         this.rotation = rotation;
@@ -60,33 +62,28 @@ public class Brick {
         this.isFilled = isFilled;
     }
 
-    ArrayList<Point> listNext = new ArrayList<>();
-    ArrayList<Point> listCurrent = new ArrayList<>();
-    private final int scorePerRow;
-
     public void paint(Pane pane, Point pieceOrigin, boolean isForNext) {
         setPoint(pieceOrigin);
-        //next brick
         if (isForNext) {
             int size = 18;
             pane.getChildren().clear();
             drawBrickRects(pane, size, listNext);
         } else {
+            pane.getChildren().clear();
             drawBrickRects(pane, gameBoard.getBrickSize(), listCurrent);
         }
-
     }
-
 
     private void drawBrickRects(Pane pane, int size, ArrayList<Point> list) {
         makePointsFromBooleans(list);
         for (Point p : list) {
-            Rectangle rectangle = new Rectangle((p.x + getPoint().x) * size,
+            Rectangle r = new Rectangle(
+                    (p.x + getPoint().x) * size,
                     (p.y + getPoint().y) * size,
                     size - 1, size - 1);
-            rectangle.setFill(getColor());
-            rectangle.setEffect(new Lighting());
-            pane.getChildren().add(rectangle);
+            r.setFill(getColor());
+            r.setEffect(new Lighting());
+            pane.getChildren().add(r);
         }
     }
 
@@ -94,34 +91,34 @@ public class Brick {
         list.clear();
         for (int i = 0; i < HEIGHT; i++) {
             for (int j = 0; j < WIDTH; j++) {
-                Point p = new Point();
                 if (getIsFilled()[i][j]) {
-                    p.x = i;
-                    p.y = j;
-                    list.add(p);
+                    list.add(new Point(i, j));
                 }
             }
         }
     }
 
-    boolean[][] isFilledBeforeRotation;
+    /**
+     * Populate listCurrent from the current isFilled matrix without drawing.
+     * Needed before spawn-time collision checks.
+     */
+    public void makePointsFromBooleansForCurrent() {
+        makePointsFromBooleans(listCurrent);
+    }
 
     public boolean rotate(int i) {
         int newRotation = (rotation + i) % 4;
-        if (newRotation < 0) {
-            newRotation = 3;
-        }
+        if (newRotation < 0) newRotation = 3;
         isFilledBeforeRotation = getIsFilled();
         setIsFilled(rotateClockWise(isFilledBeforeRotation));
         makePointsFromBooleans(listCurrent);
         if (collidesAt(getPoint().x, getPoint().y)) {
             rotation = newRotation;
             return true;
-        } else {
-            setIsFilled(isFilledBeforeRotation);
-            makePointsFromBooleans(listCurrent);
-            return false;
         }
+        setIsFilled(isFilledBeforeRotation);
+        makePointsFromBooleans(listCurrent);
+        return false;
     }
 
     private boolean[][] rotateClockWise(boolean[][] matrix) {
@@ -129,12 +126,10 @@ public class Brick {
         boolean[][] ret = new boolean[size][size];
         for (int i = 0; i < size; ++i)
             for (int j = 0; j < size; ++j)
-                ret[i][j] = matrix[size - j - 1][i]; //***
+                ret[i][j] = matrix[size - j - 1][i];
         return ret;
     }
 
-    // Make the dropping piece part of the well, so it is available for
-    // collision detection.
     public void freeze(Color[][] well) {
         for (Point p : listCurrent) {
             well[getPoint().x + p.x][getPoint().y + p.y] = getColor();
@@ -142,28 +137,26 @@ public class Brick {
         clearRows();
     }
 
-
-    // Collision test for the dropping piece
     public boolean collidesAt(int x, int y) {
         for (Point p : listCurrent) {
-            if (gameBoard.getWell()[p.x + x][p.y + y] != gameBoard.getBgColor()) {
+            int wx = p.x + x;
+            int wy = p.y + y;
+            if (wx < 0 || wx >= gameBoard.getColumn() || wy < 0 || wy >= gameBoard.getRow()) {
+                return false;
+            }
+            if (!gameBoard.getWell()[wx][wy].equals(gameBoard.getBgColor())) {
                 return false;
             }
         }
         return true;
     }
 
-
-    int score = 0;
-
     private void clearRows() {
-        boolean gap;
         int numClears = 0;
-
         for (int j = gameBoard.getRow() - 2; j > 0; j--) {
-            gap = false;
+            boolean gap = false;
             for (int i = 1; i < gameBoard.getColumn() - 1; i++) {
-                if (gameBoard.getWell()[i][j] == gameBoard.getBgColor()) {
+                if (gameBoard.getWell()[i][j].equals(gameBoard.getBgColor())) {
                     gap = true;
                     break;
                 }
@@ -174,42 +167,35 @@ public class Brick {
                 numClears++;
             }
         }
-
-
-        score = gameBoard.getTetris().getScore();
-
-        for (int i = 0; i < numClears; i++) {
-            score = score + scorePerRow;
-        }
-
+        int score = gameBoard.getTetris().getScore() + numClears * scorePerRow;
         gameBoard.getTetris().setScore(score);
     }
 
     private void deleteRow(int row) {
         Color[][] well = gameBoard.getWell();
-        for (int j = row - 1; j > 0; j--) {
-            for (int i = 1; i < gameBoard.getColumn(); i++) {
-                well[i][j + 1] = well[i][j];
+        for (int j = row; j > 1; j--) {
+            for (int i = 1; i < gameBoard.getColumn() - 1; i++) {
+                well[i][j] = well[i][j - 1];
             }
         }
-        gameBoard.setWell(well);
+        for (int i = 1; i < gameBoard.getColumn() - 1; i++) {
+            well[i][1] = gameBoard.getBgColor();
+        }
     }
 
-    //can be use everywhere is needed
-    // not need for game right now (moves handle in GameBoard Class)
     public boolean move(Direction direction, Point pieceOrigin) {
         if (direction == Direction.LEFT) {
-            pieceOrigin.x += -1;
-            return true;
-        } else if (direction == Direction.RIGHT) {
-            pieceOrigin.x += +1;
-            return true;
-        } else if (direction == Direction.DOWN) {
-            pieceOrigin.y += +1;
+            pieceOrigin.x -= 1;
             return true;
         }
-        setPoint(pieceOrigin);
+        if (direction == Direction.RIGHT) {
+            pieceOrigin.x += 1;
+            return true;
+        }
+        if (direction == Direction.DOWN) {
+            pieceOrigin.y += 1;
+            return true;
+        }
         return false;
     }
-
 }

@@ -10,23 +10,29 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import util.StageProperty;
 
-
 public class Tetris extends Application {
+
     private SettingsManager settingsManager;
     private GameBoard gameBoard;
     private ScoreManager scoreManager;
     private int level;
     private int heart = 3;
     private int score;
+
     public static Tetris tetris;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
         tetris = this;
-        Parent root = FXMLLoader.load(getClass().getResource(StageProperty.MAIN_MENU_PATH));
+
+        FXMLLoader loader = new FXMLLoader(getClass().getResource(StageProperty.MAIN_MENU_PATH));
+        Parent root = loader.load();
         root.setStyle(StageProperty.STYLE_EFFECT);
+
         Scene scene = new Scene(root, StageProperty.WIDTH, StageProperty.HEIGHT);
-        scene.getStylesheets().add(getClass().getResource(StageProperty.STYLE_PATH).toExternalForm());
+        scene.getStylesheets().add(
+                Tetris.class.getResource(StageProperty.STYLE_PATH).toExternalForm());
+
         primaryStage.setTitle("Tetris");
         primaryStage.setResizable(false);
         primaryStage.setScene(scene);
@@ -42,9 +48,8 @@ public class Tetris extends Application {
     }
 
     @Override
-    public void stop() throws Exception {
-        super.stop();
-        System.exit(0);
+    public void stop() {
+        // Do NOT call System.exit(0) here. Let JavaFX shut down cleanly.
     }
 
     public GameBoard getGameBoard() {

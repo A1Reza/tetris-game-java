@@ -1,0 +1,1 @@
+A desktop Tetris clone built with Java 25 and JavaFX 25, featuring FXML views, a randomized tetromino bag, live score/level/hearts HUD, settings, and a persistent high score table. 

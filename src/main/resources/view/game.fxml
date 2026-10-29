@@ -1,44 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Pane?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-
-<BorderPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="controller.GameController"
-            onKeyPressed="#sceneKeyListeners"
-            focusTraversable="true">
-
-    <center>
-        <HBox spacing="14" style="-fx-padding: 10;">
-            <!-- Stacked board: fixed grid (bottom) + falling piece overlay (top) -->
-            <StackPane>
-                <Pane fx:id="gamePane" prefWidth="300" prefHeight="400"/>
-                <Pane fx:id="paneFalling" prefWidth="300" prefHeight="400"
-                      mouseTransparent="true"/>
-            </StackPane>
-
-            <!-- Right sidebar -->
-            <VBox spacing="10" alignment="TOP_CENTER">
-                <Label fx:id="lblScore" text="Score: 0"/>
-                <Label fx:id="lblHeart" text="Heart: 3"/>
-                <Label fx:id="lblLevel" text="level: 1"/>
-
-                <Label text="Next:"/>
-
-                <Pane fx:id="paneNextBrick" prefWidth="80" prefHeight="80"
-                      style="-fx-background-color: rgba(0,0,0,0.15);
-                             -fx-border-color: #888;
-                             -fx-border-width: 1;"/>
-
-                <Button fx:id="btnStart" text="Start" focusTraversable="false"/>
-                <Button fx:id="btnBack" text="Back" focusTraversable="false"/>
-            </VBox>
-        </HBox>
-    </center>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="controller.GameController" onKeyPressed="#sceneKeyListeners" focusTraversable="true">
+  <padding><Insets top="22" right="32" bottom="24" left="32"/></padding>
+  <top><VBox spacing="6"><Label text="One more line." styleClass="game-title"/><Label text="Clear lines. Make space. See how far you can go." styleClass="subtitle"/><Region prefHeight="20"/></VBox></top>
+  <center><HBox alignment="TOP_CENTER" spacing="24">
+    <StackPane maxHeight="400" maxWidth="300" minHeight="400" minWidth="300">
+      <Pane fx:id="gamePane" prefWidth="300" prefHeight="400"/>
+      <Pane fx:id="paneFalling" prefWidth="300" prefHeight="400" mouseTransparent="true"/>
+    </StackPane>
+    <VBox spacing="12" prefWidth="190">
+      <VBox spacing="8" styleClass="card"><Label text="YOUR GAME" styleClass="eyebrow"/><Label fx:id="lblScore" text="Score: 0" styleClass="stat"/><HBox spacing="16"><Label fx:id="lblLevel" text="Level: 1"/><Label fx:id="lblHeart" text="Lives: 3"/></HBox></VBox>
+      <VBox spacing="10" styleClass="card"><Label text="UP NEXT" styleClass="eyebrow"/><Pane fx:id="paneNextBrick" prefWidth="100" prefHeight="76" styleClass="preview"/></VBox>
+      <Button fx:id="btnStart" text="Start" styleClass="button,primary" maxWidth="Infinity" focusTraversable="false"/>
+      <Button fx:id="btnBack" text="←  Main menu" maxWidth="Infinity" focusTraversable="false"/>
+      <Label text="← →  Move     ↑  Rotate&#10;↓  Soft drop    Z  Turn left&#10;Space / Enter  Hard drop&#10;P / Esc  Pause" styleClass="controls" wrapText="true"/>
+    </VBox>
+  </HBox></center>
+  <bottom><Label text="A SMALL TIP     Keep your stack low and leave a little room to breathe." styleClass="eyebrow"/></bottom>
 </BorderPane>

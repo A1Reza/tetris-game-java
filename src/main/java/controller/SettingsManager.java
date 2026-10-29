@@ -75,8 +75,13 @@ public class SettingsManager implements Initializable {
             }
         } catch (Exception e) {
             setScorePerRow(10);
-            setBgColor(Color.web("#cccccc"));
+            setBgColor(Color.web("#203630"));
             setStartLevel(1);
+        }
+        if (flag && lblScorePerRow != null) {
+            lblScorePerRow.setText(String.valueOf(scorePerRow));
+            lblStartLevel.setText(String.valueOf(startLevel));
+            cpBgColor.setValue(bgColor);
         }
     }
 
@@ -86,14 +91,24 @@ public class SettingsManager implements Initializable {
         Color chosen = cpBgColor.getValue();
         if (chosen != null) bgColor = chosen;
 
+        // Do not persist transient empty or invalid input while the user is editing.
+        int points, level;
+        try {
+            points = Integer.parseInt(lblScorePerRow.getText().trim());
+            level = Integer.parseInt(lblStartLevel.getText().trim());
+        } catch (NumberFormatException e) { return; }
+        if (points < 10 || points > 1000 || level < 1 || level > 10) return;
+        setScorePerRow(points);
+        setStartLevel(level);
+
         try {
             Files.createDirectories(DATA_DIR);
             try (BufferedWriter bw = Files.newBufferedWriter(SETTING_FILE)) {
-                bw.write(lblScorePerRow.getText().trim());
+                bw.write(String.valueOf(scorePerRow));
                 bw.newLine();
                 bw.write(bgColor.toString());
                 bw.newLine();
-                bw.write(lblStartLevel.getText().trim());
+                bw.write(String.valueOf(startLevel));
             }
         } catch (IOException e) {
             e.printStackTrace();

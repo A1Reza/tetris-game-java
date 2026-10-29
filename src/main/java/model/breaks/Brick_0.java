@@ -12,11 +12,10 @@ public class Brick_0 extends Brick {
     public Brick_0(GameBoard gameBoard, Point point) {
         super(gameBoard, point);
         setIsFilled(new boolean[][]{
-                {false, false, false},
-                {false, true, true},
-                {false, true, true},
+                {true, true},
+                {true, true},
         });
-        setColor(Color.GREEN);
+        setColor(Color.web("#efc765"));
     }
 
 

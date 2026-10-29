@@ -1,6 +1,7 @@
 package controller;
 
 import javafx.fxml.FXML;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
@@ -25,7 +26,7 @@ public class MainMenuController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         btnNewGame.setOnAction(e -> startNewGame());
-        btnExit.setOnAction(e -> System.exit(0));
+        btnExit.setOnAction(e -> Platform.exit());
         btnSettings.setOnAction(e -> openWindow("/view/settings.fxml", "Settings", 360, 230));
         btnScoresTable.setOnAction(e -> openWindow("/view/scores_table.fxml", "Scores Table", 510, 300));
     }

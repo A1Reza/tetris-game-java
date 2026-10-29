@@ -1,201 +1,141 @@
 package controller;
 
 import enums.Direction;
-import javafx.scene.effect.Lighting;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Brick {
     private Point point;
     private int rotation;
-    private static final int HEIGHT = 3;
-    private static final int WIDTH = 3;
     private Color color;
-    private boolean[][] isFilled = new boolean[3][3];
+    // Matrices use [x][y], matching the desktop board's coordinates.
+    private boolean[][] isFilled;
+    private boolean[][] spawnShape;
     private final GameBoard gameBoard;
-    private final int scorePerRow;
-
-    private final ArrayList<Point> listNext = new ArrayList<>();
     private final ArrayList<Point> listCurrent = new ArrayList<>();
-    private boolean[][] isFilledBeforeRotation;
 
-    public Brick(GameBoard gameBoard) {
-        this.gameBoard = gameBoard;
-        this.scorePerRow = gameBoard.getTetris().getSettingsManager().getScorePerRow();
+    public Brick(GameBoard gameBoard) { this(gameBoard, new Point()); }
+    public Brick(GameBoard gameBoard, Point point) { this.gameBoard = gameBoard; this.point = point; }
+    public Point getPoint() { return point; }
+    public void setPoint(Point point) { this.point = point; }
+    public Color getColor() { return color; }
+    public void setColor(Color color) { this.color = color; }
+    public boolean[][] getIsFilled() { return isFilled; }
+
+    public void setIsFilled(boolean[][] shape) {
+        spawnShape = copy(shape);
+        isFilled = copy(shape);
+        makePointsFromBooleansForCurrent();
     }
 
-    public Brick(GameBoard gameBoard, Point point) {
-        this.gameBoard = gameBoard;
-        this.point = point;
-        this.scorePerRow = gameBoard.getTetris().getSettingsManager().getScorePerRow();
+    private static boolean[][] copy(boolean[][] matrix) {
+        return Arrays.stream(matrix).map(boolean[]::clone).toArray(boolean[][]::new);
     }
 
-    public Point getPoint() {
-        return point;
+    public void setRotation(int value) {
+        rotation = Math.floorMod(value, 4);
+        isFilled = copy(spawnShape);
+        for (int i = 0; i < rotation; i++) isFilled = rotated(isFilled, 1);
+        makePointsFromBooleansForCurrent();
     }
 
-    public void setPoint(Point point) {
-        this.point = point;
-    }
-
-    public void setRotation(int rotation) {
-        this.rotation = rotation;
-    }
-
-    public Color getColor() {
-        return color;
-    }
-
-    public void setColor(Color color) {
-        this.color = color;
-    }
-
-    public boolean[][] getIsFilled() {
-        return isFilled;
-    }
-
-    public void setIsFilled(boolean[][] isFilled) {
-        this.isFilled = isFilled;
-    }
-
-    public void paint(Pane pane, Point pieceOrigin, boolean isForNext) {
-        setPoint(pieceOrigin);
-        if (isForNext) {
-            int size = 18;
-            pane.getChildren().clear();
-            drawBrickRects(pane, size, listNext);
-        } else {
-            pane.getChildren().clear();
-            drawBrickRects(pane, gameBoard.getBrickSize(), listCurrent);
-        }
-    }
-
-    private void drawBrickRects(Pane pane, int size, ArrayList<Point> list) {
-        makePointsFromBooleans(list);
-        for (Point p : list) {
-            Rectangle r = new Rectangle(
-                    (p.x + getPoint().x) * size,
-                    (p.y + getPoint().y) * size,
-                    size - 1, size - 1);
-            r.setFill(getColor());
-            r.setEffect(new Lighting());
-            pane.getChildren().add(r);
-        }
-    }
-
-    private void makePointsFromBooleans(ArrayList<Point> list) {
-        list.clear();
-        for (int i = 0; i < HEIGHT; i++) {
-            for (int j = 0; j < WIDTH; j++) {
-                if (getIsFilled()[i][j]) {
-                    list.add(new Point(i, j));
-                }
+    public void paint(Pane pane, Point origin, boolean preview) {
+        if (pane == null) return;
+        pane.getChildren().clear();
+        int size = preview ? 18 : gameBoard.getBrickSize();
+        // Previews never change the live piece's origin or orientation.
+        boolean[][] shape = preview ? spawnShape : isFilled;
+        for (int x = 0; x < shape.length; x++) {
+            for (int y = 0; y < shape[x].length; y++) {
+                if (!shape[x][y]) continue;
+                Rectangle r = new Rectangle((x + origin.x) * size, (y + origin.y) * size, size - 2, size - 2);
+                r.setArcWidth(4); r.setArcHeight(4); r.setFill(color);
+                pane.getChildren().add(r);
             }
         }
     }
 
-    /**
-     * Populate listCurrent from the current isFilled matrix without drawing.
-     * Needed before spawn-time collision checks.
-     */
     public void makePointsFromBooleansForCurrent() {
-        makePointsFromBooleans(listCurrent);
+        listCurrent.clear();
+        for (int x = 0; x < isFilled.length; x++) {
+            for (int y = 0; y < isFilled[x].length; y++) {
+                if (isFilled[x][y]) listCurrent.add(new Point(x, y));
+            }
+        }
     }
 
-    public boolean rotate(int i) {
-        int newRotation = (rotation + i) % 4;
-        if (newRotation < 0) newRotation = 3;
-        isFilledBeforeRotation = getIsFilled();
-        setIsFilled(rotateClockWise(isFilledBeforeRotation));
-        makePointsFromBooleans(listCurrent);
-        if (collidesAt(getPoint().x, getPoint().y)) {
-            rotation = newRotation;
-            return true;
+    public boolean rotate(int direction) {
+        if (direction == 0) return false;
+        boolean[][] before = isFilled;
+        isFilled = rotated(before, direction);
+        makePointsFromBooleansForCurrent();
+        for (int dx : new int[]{0, -1, 1, -2, 2}) {
+            if (collidesAt(point.x + dx, point.y)) {
+                point.x += dx;
+                rotation = Math.floorMod(rotation + Integer.signum(direction), 4);
+                return true;
+            }
         }
-        setIsFilled(isFilledBeforeRotation);
-        makePointsFromBooleans(listCurrent);
+        isFilled = before;
+        makePointsFromBooleansForCurrent();
         return false;
     }
 
-    private boolean[][] rotateClockWise(boolean[][] matrix) {
+    private boolean[][] rotated(boolean[][] matrix, int direction) {
         int size = matrix.length;
-        boolean[][] ret = new boolean[size][size];
-        for (int i = 0; i < size; ++i)
-            for (int j = 0; j < size; ++j)
-                ret[i][j] = matrix[size - j - 1][i];
-        return ret;
+        boolean[][] result = new boolean[size][size];
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++) {
+                result[x][y] = direction > 0 ? matrix[y][size - x - 1] : matrix[size - y - 1][x];
+            }
+        }
+        return result;
     }
 
     public void freeze(Color[][] well) {
-        for (Point p : listCurrent) {
-            well[getPoint().x + p.x][getPoint().y + p.y] = getColor();
-        }
+        for (Point p : listCurrent) well[point.x + p.x][point.y + p.y] = color;
         clearRows();
     }
 
+    /** True when the shape fits. Null cells are empty regardless of the background color. */
     public boolean collidesAt(int x, int y) {
         for (Point p : listCurrent) {
-            int wx = p.x + x;
-            int wy = p.y + y;
-            if (wx < 0 || wx >= gameBoard.getColumn() || wy < 0 || wy >= gameBoard.getRow()) {
-                return false;
-            }
-            if (!gameBoard.getWell()[wx][wy].equals(gameBoard.getBgColor())) {
-                return false;
-            }
+            int wx = p.x + x, wy = p.y + y;
+            if (wx < 1 || wx >= gameBoard.getColumn() - 1 || wy < 0 || wy >= gameBoard.getRow() - 1
+                    || gameBoard.getWell()[wx][wy] != null) return false;
         }
         return true;
     }
 
     private void clearRows() {
-        int numClears = 0;
-        for (int j = gameBoard.getRow() - 2; j > 0; j--) {
-            boolean gap = false;
-            for (int i = 1; i < gameBoard.getColumn() - 1; i++) {
-                if (gameBoard.getWell()[i][j].equals(gameBoard.getBgColor())) {
-                    gap = true;
-                    break;
-                }
-            }
-            if (!gap) {
-                deleteRow(j);
-                j++;
-                numClears++;
-            }
-        }
-        int score = gameBoard.getTetris().getScore() + numClears * scorePerRow;
-        gameBoard.getTetris().setScore(score);
-    }
-
-    private void deleteRow(int row) {
         Color[][] well = gameBoard.getWell();
-        for (int j = row; j > 1; j--) {
-            for (int i = 1; i < gameBoard.getColumn() - 1; i++) {
-                well[i][j] = well[i][j - 1];
+        int clears = 0;
+        for (int y = gameBoard.getRow() - 2; y >= 0; y--) {
+            boolean full = true;
+            for (int x = 1; x < gameBoard.getColumn() - 1; x++) {
+                if (well[x][y] == null) { full = false; break; }
             }
+            if (!full) continue;
+            for (int row = y; row > 0; row--) {
+                for (int x = 1; x < gameBoard.getColumn() - 1; x++) well[x][row] = well[x][row - 1];
+            }
+            for (int x = 1; x < gameBoard.getColumn() - 1; x++) well[x][0] = null;
+            clears++;
+            y++;
         }
-        for (int i = 1; i < gameBoard.getColumn() - 1; i++) {
-            well[i][1] = gameBoard.getBgColor();
-        }
+        gameBoard.getTetris().setScore(gameBoard.getTetris().getScore()
+                + clears * gameBoard.getTetris().getSettingsManager().getScorePerRow());
     }
 
-    public boolean move(Direction direction, Point pieceOrigin) {
-        if (direction == Direction.LEFT) {
-            pieceOrigin.x -= 1;
-            return true;
-        }
-        if (direction == Direction.RIGHT) {
-            pieceOrigin.x += 1;
-            return true;
-        }
-        if (direction == Direction.DOWN) {
-            pieceOrigin.y += 1;
-            return true;
-        }
-        return false;
+    public boolean move(Direction direction, Point origin) {
+        int dx = direction == Direction.LEFT ? -1 : direction == Direction.RIGHT ? 1 : 0;
+        int dy = direction == Direction.DOWN ? 1 : 0;
+        if (!collidesAt(origin.x + dx, origin.y + dy)) return false;
+        origin.translate(dx, dy);
+        return true;
     }
 }

@@ -2,11 +2,12 @@ package controller;
 
 import enums.Direction;
 import enums.State;
-import javafx.application.Platform;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputDialog;
-import javafx.scene.effect.Lighting;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
@@ -38,7 +39,7 @@ public class GameBoard {
     private Color[][] well;
     private Pane pane;
     private Brick brick;
-    private Timer timer;
+    private Timeline timer;
     private volatile boolean isGameOver = false;
     private volatile boolean isProcessingCollision = false;
     private boolean gameOverPopupShown = false;
@@ -64,8 +65,18 @@ public class GameBoard {
 
     public void start() {
         if (isGameOver) return;
-
+        if (state == State.START) return;
+        if (state == State.STOP && brick != null) {
+            state = State.START;
+            startThread();
+            return;
+        }
         state = State.START;
+        spawnPiece();
+        if (!isGameOver) startThread();
+    }
+
+    private void spawnPiece() {
         pieceOrigin = new Point(5, 2);
 
         while (nextPieces.size() < 2) {
@@ -90,13 +101,9 @@ public class GameBoard {
             return;
         }
 
-        drawFallingBrick();
-
         Brick brickNext = bricks.get(nextPieces.get(0));
-        brickNext.setRotation(0);
         brickNext.paint(nextPane, new Point(0, 0), true);
-
-        startThread();
+        repaint();
     }
 
     private void drawFallingBrick() {
@@ -105,36 +112,17 @@ public class GameBoard {
     }
 
     private void startThread() {
-        if (timer != null) {
-            timer.cancel();
-            timer.purge();
-            timer = null;
-        }
-
-        int period = 1000 / Math.max(level, 1);
-        final Timer localTimer = new Timer(true);
-        timer = localTimer;
-        localTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                Platform.runLater(() -> {
-                    if (timer != localTimer || state == State.STOP || isGameOver) {
-                        localTimer.cancel();
-                        return;
-                    }
-                    if (isProcessingCollision) return;
-                    if (moveDown(false)) {
-                        repaint();
-                    } else {
-                        localTimer.cancel();
-                    }
-                });
-            }
-        }, 1000, period);
+        if (timer != null) timer.stop();
+        timer = new Timeline(new KeyFrame(Duration.millis(1000.0 / Math.max(level, 1)), event -> {
+            if (state == State.START && !isGameOver && !isProcessingCollision) moveDown(false);
+        }));
+        timer.setCycleCount(Timeline.INDEFINITE);
+        timer.play();
     }
 
     public void stop() {
         state = State.STOP;
+        if (timer != null) timer.stop();
     }
 
     public void paint(Pane gamePane) {
@@ -145,9 +133,9 @@ public class GameBoard {
         for (int i = 0; i < column; i++) {
             for (int j = 0; j < row; j++) {
                 if (i == 0 || i == column - 1 || j == row - 1) {
-                    well[i][j] = Color.GRAY;
+                    well[i][j] = Color.web("#344b40");
                 } else {
-                    well[i][j] = bgColor;
+                    well[i][j] = null;
                 }
             }
         }
@@ -173,7 +161,7 @@ public class GameBoard {
         for (int i = 0; i < column; i++) {
             for (int j = 0; j < row; j++) {
                 if (rectangles[i][j] != null) {
-                    rectangles[i][j].setFill(well[i][j]);
+                    rectangles[i][j].setFill(well[i][j] == null ? bgColor : well[i][j]);
                 }
             }
         }
@@ -199,27 +187,23 @@ public class GameBoard {
         else return;
 
         lvl = lvl + tetris.getSettingsManager().getStartLevel() - 1;
+        boolean changed = level != lvl;
         level = lvl;
         tetris.setLevel(lvl);
+        if (changed && state == State.START) startThread();
     }
 
     private void addRects() {
-        Lighting lighting = new Lighting();
         for (int i = 0; i < column; i++) {
             for (int j = 0; j < row; j++) {
                 Rectangle rectangle = new Rectangle(
                         brickSize * i, brickSize * j, brickSize - 1, brickSize - 1);
-                rectangle.setFill(well[i][j]);
-                rectangle.setEffect(lighting);
+                rectangle.setFill(well[i][j] == null ? bgColor : well[i][j]);
+                rectangle.setArcWidth(3);
+                rectangle.setArcHeight(3);
                 pane.getChildren().add(rectangle);
                 rectangles[i][j] = rectangle;
             }
-        }
-        for (int i = 0; i < column; i++) {
-            Rectangle rectangle = new Rectangle(brickSize * i, 0, brickSize - 1, brickSize - 1);
-            rectangle.setFill(Color.GRAY);
-            rectangle.setEffect(lighting);
-            pane.getChildren().add(rectangle);
         }
     }
 
@@ -248,15 +232,15 @@ public class GameBoard {
     }
 
     public boolean moveDown(boolean isFromEnter) {
-        if (isGameOver) return false;
+        if (isGameOver || state != State.START || brick == null) return false;
+        if (isFromEnter) {
+            while (brick.collidesAt(pieceOrigin.x, pieceOrigin.y + 1)) pieceOrigin.y++;
+            fixToWell();
+            return true;
+        }
         if (brick.collidesAt(pieceOrigin.x, pieceOrigin.y + 1)) {
-            if (isFromEnter) {
-                while (brick.collidesAt(pieceOrigin.x, pieceOrigin.y + 1)) {
-                    pieceOrigin.y += 1;
-                }
-            } else {
-                pieceOrigin.y += 1;
-            }
+            pieceOrigin.y += 1;
+            repaint();
             return true;
         } else {
             fixToWell();
@@ -270,14 +254,13 @@ public class GameBoard {
 
         brick.freeze(well);
         isProcessingCollision = false;
-        start();
+        spawnPiece();
     }
 
     private void setupGameOver() {
         // Stop the timer immediately so nothing else runs while we show UI.
         if (timer != null) {
-            timer.cancel();
-            timer.purge();
+            timer.stop();
             timer = null;
         }
         state = State.STOP;
@@ -291,9 +274,9 @@ public class GameBoard {
             boolean saved = isHighScore();
             if (!saved) {
                 Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("Game Over");
+                alert.setTitle("Nice stacking");
                 alert.setHeaderText(null);
-                alert.setContentText("YOU LOSE AND NOT IN TOP 10!");
+                alert.setContentText("A good run! Your score: " + tetris.getScore() + ". Ready for another?");
                 alert.showAndWait();
             }
             tetris.setHeart(3);
@@ -309,8 +292,8 @@ public class GameBoard {
 
     private void refreshLabels() {
         if (lblScore != null) lblScore.setText("Score: " + tetris.getScore());
-        if (lblHeart != null) lblHeart.setText("Heart: " + tetris.getHeart());
-        if (lblLevel != null) lblLevel.setText("level: " + tetris.getLevel());
+        if (lblHeart != null) lblHeart.setText("Lives: " + tetris.getHeart());
+        if (lblLevel != null) lblLevel.setText("Level: " + tetris.getLevel());
     }
 
     private void restart() {
@@ -320,6 +303,8 @@ public class GameBoard {
         gameOverPopupShown = false;
         level = tetris.getSettingsManager().getStartLevel();
         tetris.setLevel(level);
+        brick = null;
+        nextPieces.clear();
         paint(pane);
         start();
     }
@@ -355,17 +340,19 @@ public class GameBoard {
     }
 
     public void sceneKeyListeners(KeyEvent event) {
-        if (isGameOver || isProcessingCollision) return;
+        if (isGameOver || isProcessingCollision || state != State.START || brick == null) return;
 
         if (event.getCode() == KeyCode.UP) {
-            if (brick.rotate(-1)) repaint();
-        } else if (event.getCode() == KeyCode.DOWN) {
             if (brick.rotate(+1)) repaint();
+        } else if (event.getCode() == KeyCode.DOWN) {
+            moveDown(false);
+        } else if (event.getCode() == KeyCode.Z) {
+            if (brick.rotate(-1)) repaint();
         } else if (event.getCode() == KeyCode.LEFT) {
             if (move(Direction.LEFT, pieceOrigin)) repaint();
         } else if (event.getCode() == KeyCode.RIGHT) {
             if (move(Direction.RIGHT, pieceOrigin)) repaint();
-        } else if (event.getCode() == KeyCode.ENTER) {
+        } else if (event.getCode() == KeyCode.ENTER || event.getCode() == KeyCode.SPACE) {
             if (moveDown(true)) repaint();
         }
     }

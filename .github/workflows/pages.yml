@@ -44,7 +44,7 @@ jobs:
           distribution: temurin
           java-version: "25"
           cache: maven
-      - run: xvfb-run -a mvn -B -ntp verify
+      - run: xvfb-run -a mvn -B -ntp clean verify
 
   deploy:
     name: Deploy GitHub Pages

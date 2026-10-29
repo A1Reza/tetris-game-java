@@ -1,7 +1,6 @@
 package controller;
 
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -30,7 +29,11 @@ public class ScoreManager implements Initializable {
     private final ArrayList<Player> players = new ArrayList<>();
 
     public void addPlayer(String name, int score) {
-        players.add(new Player(name, score));
+        String safeName = name == null ? "" : name.replaceAll("[%\\r\\n]", " ").trim();
+        if (safeName.isEmpty() || score < 0) return;
+        players.add(new Player(safeName.substring(0, Math.min(safeName.length(), 40)), score));
+        players.sort(Comparator.comparingInt(Player::getScore).reversed());
+        if (players.size() > 10) players.subList(10, players.size()).clear();
     }
 
     public ArrayList<Player> getPlayers() {
@@ -119,6 +122,7 @@ public class ScoreManager implements Initializable {
         // 2. Score column
         colScore.setCellValueFactory(cellData ->
                 new SimpleStringProperty(String.valueOf(cellData.getValue().getScore())));
+        colScore.setComparator(Comparator.comparingInt(Integer::parseInt));
 
         // 3. Rank column (calculated based on current row index)
         colRank.setCellValueFactory(cellData ->

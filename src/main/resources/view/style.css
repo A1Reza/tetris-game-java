@@ -1,81 +1,25 @@
-.root {
-    -fx-background-color: #fdf1cb;
-}
-
-.button {
-    -fx-background-color: #f4ae91 linear-gradient(#fafdfe, #e8f5fc),
-    linear-gradient(#f3ad90 0%, #f2ac8f 49%, #f37e4e 50%, #f3ad90 100%);
-    -fx-text-fill: black;
-    -fx-font-weight: bold;
-    -fx-pref-width: 165;
-    -fx-pref-height: 32;
-}
-
-#btnStart {
-    -fx-background-color: #f4ae91 linear-gradient(#fafdfe, #e8f5fc),
-    linear-gradient(#f3ad90 0%, #f2ac8f 49%, #f37e4e 50%, #f3ad90 100%);
-    -fx-text-fill: black;
-    -fx-font-weight: bold;
-    -fx-pref-width: 100;
-    -fx-pref-height: 32;
-}
-
-#lblHeart, #lblScore, #lblLevel {
-    -fx-pref-width: 100;
-}
-
-.label {
-    -fx-text-fill: black;
-    -fx-font-family: "Book Antiqua";
-}
-
-.table-view .row .label {
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-background-color: #5b9ad4;
-}
-
-.table-view .column-header .label {
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-background-color: #5b9ad4;
-}
-
-.table-cell {
-    -fx-alignment: center;
-    -fx-font-family: "Tw Cen MT";
-    -fx-font-size: 15;
-}
-
-#colName:odd {
-    -fx-background-color: #c4dfb3;
-}
-
-#colName:even {
-    -fx-background-color: #87b46a;
-}
-
-#colRank:odd {
-    -fx-background-color: #d8d8d8;
-}
-
-#colRank:even {
-    -fx-background-color: #a479b8;
-}
-
-#colScore:odd {
-    -fx-background-color: #f3b082;
-}
-
-#colScore:even {
-    -fx-background-color: #e08b50;
-}
-
-#btnBack {
-    -fx-background-image: url("/img/back_arrow.png");
-    -fx-background-color: transparent;
-    -fx-background-position: center;
-    -fx-background-size: 30;
-    -fx-pref-width: 30;
-    -fx-pref-height: 30;
-}
+.root { -fx-background-color: #f6f5f0; -fx-font-family: "Segoe UI"; -fx-font-size: 13px; }
+.label { -fx-text-fill: #243c36; }
+.button { -fx-background-color: #eeefe7; -fx-text-fill: #243c36; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 6; -fx-border-radius: 6; -fx-border-color: #dce0d3; -fx-cursor: hand; }
+.button:hover { -fx-background-color: #e0e5d8; }
+.button:focused { -fx-border-color: #dc754e; }
+.primary { -fx-background-color: #dc754e; -fx-text-fill: #fff8ed; -fx-border-color: transparent; }
+.primary:hover { -fx-background-color: #c66541; }
+.wordmark { -fx-font-size: 25px; -fx-font-weight: bold; }
+.eyebrow { -fx-font-size: 10px; -fx-text-fill: #7b8277; }
+.hero-title { -fx-font-size: 50px; -fx-font-weight: bold; }
+.subtitle { -fx-font-size: 13px; -fx-text-fill: #7b8277; }
+.game-title { -fx-font-size: 25px; -fx-font-weight: bold; }
+.card { -fx-background-color: #eeefe7; -fx-background-radius: 8; -fx-border-color: #e1e3d9; -fx-border-radius: 8; -fx-padding: 16; }
+.stat { -fx-font-size: 16px; -fx-font-weight: bold; }
+.controls { -fx-font-size: 11px; -fx-text-fill: #7b8277; }
+.preview { -fx-background-color: #e0e5d8; -fx-background-radius: 6; }
+.text-field, .color-picker { -fx-background-color: #eeefe7; -fx-text-fill: #243c36; -fx-border-color: #dce0d3; -fx-border-radius: 5; -fx-background-radius: 5; }
+.table-view { -fx-background-color: #f6f5f0; -fx-border-color: #e1e3d9; -fx-background-radius: 8; }
+.table-view .column-header, .table-view .filler { -fx-background-color: #e0e5d8; -fx-size: 38; }
+.table-view .column-header .label { -fx-text-fill: #243c36; -fx-font-weight: bold; }
+.table-row-cell { -fx-background-color: #f6f5f0; -fx-cell-size: 32; }
+.table-row-cell:odd { -fx-background-color: #eeefe7; }
+.table-row-cell:selected { -fx-background-color: #d4dfcd; }
+.table-cell { -fx-alignment: center; -fx-text-fill: #243c36; -fx-font-size: 13px; -fx-border-color: transparent; }
+.dialog-pane { -fx-background-color: #f6f5f0; }

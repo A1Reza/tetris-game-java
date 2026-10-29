@@ -1,0 +1,15 @@
+{
+  "name": "tetris-arcade",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "test": "node --test test/engine.test.js",
+    "test:e2e": "playwright test",
+    "build": "node scripts/build.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}

@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f6f5f0" />
+    <meta
+      name="description"
+      content="A fresh take on a timeless block game. Play Tetris in your browser with hold, ghost pieces, keyboard and touch controls."
+    />
+    <title>Tetris — One more line.</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./style.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <svg
+      class="svg-definitions"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <symbol id="icon-blocks" viewBox="0 0 24 24">
+        <path d="M8 2h8v7h7v8H1V9h7z" fill="currentColor" />
+        <path d="M8 19h8v4H8z" fill="currentColor" opacity=".45" />
+      </symbol>
+      <symbol id="icon-play" viewBox="0 0 24 24">
+        <path d="m9 5 11 7-11 7z" fill="currentColor" />
+      </symbol>
+      <symbol id="icon-pause" viewBox="0 0 24 24">
+        <path d="M8 5v14M16 5v14" />
+      </symbol>
+      <symbol id="icon-reset" viewBox="0 0 24 24">
+        <path d="M4 10a8 8 0 1 1 1 7M4 4v6h6" />
+      </symbol>
+      <symbol id="icon-trophy" viewBox="0 0 24 24">
+        <path
+          d="M7 3h10v6a5 5 0 0 1-10 0zM7 5H3v3a4 4 0 0 0 4 4m10-7h4v3a4 4 0 0 1-4 4m-5 2v6m-4 1h8"
+        />
+      </symbol>
+      <symbol id="icon-settings" viewBox="0 0 24 24">
+        <path d="M4 7h16M4 17h16M9 4v6m6 4v6" />
+      </symbol>
+      <symbol id="icon-volume" viewBox="0 0 24 24">
+        <path
+          d="m12 4-6 5H3v6h3l6 5zM16 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"
+        />
+      </symbol>
+      <symbol id="icon-muted" viewBox="0 0 24 24">
+        <path d="m12 4-6 5H3v6h3l6 5zM17 9l5 6m0-6-5 6" />
+      </symbol>
+      <symbol id="icon-arrow" viewBox="0 0 24 24">
+        <path d="M19 12H5m6-6-6 6 6 6" />
+      </symbol>
+      <symbol id="icon-rotate" viewBox="0 0 24 24">
+        <path d="M20 10a8 8 0 1 0-1 7m1-13v6h-6" />
+      </symbol>
+      <symbol id="icon-drop" viewBox="0 0 24 24">
+        <path d="M12 3v12m-5-5 5 5 5-5M5 21h14" />
+      </symbol>
+      <symbol id="icon-hold" viewBox="0 0 24 24">
+        <path d="M4 7h16l-4-4M20 17H4l4 4M20 7v4M4 17v-4" />
+      </symbol>
+      <symbol id="icon-close" viewBox="0 0 24 24">
+        <path d="m6 6 12 12M18 6 6 18" />
+      </symbol>
+      <symbol id="icon-github" viewBox="0 0 24 24">
+        <path
+          d="M9 21v-4c-4 1-4-2-6-2m12 6v-4c0-1 0-2-1-2 4 0 7-2 7-6 0-2-1-3-2-4 0-1 0-2-1-3-2 0-3 1-4 1h-4C9 2 8 1 6 2 5 3 5 4 5 5 4 6 3 7 3 9c0 4 3 6 7 6-1 0-1 1-1 2"
+        />
+      </symbol>
+    </svg>
+    <div class="site-shell">
+      <header class="site-header">
+        <a class="brand" href="./" aria-label="Tetris home"
+          ><span class="brand-mark"
+            ><svg><use href="#icon-blocks" /></svg></span
+          ><span>tetris<span class="brand-period">.</span></span></a
+        >
+        <nav aria-label="Main navigation">
+          <span class="nav-active">The arcade</span
+          ><a
+            href="https://github.com/A1Reza/tetris-game-java"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Source code <span aria-hidden="true">↗</span></a
+          >
+        </nav>
+        <span class="header-note"
+          ><span class="status-dot"></span> A classic, reimagined.</span
+        >
+      </header>
+      <main>
+        <section class="intro" aria-labelledby="page-title">
+          <div>
+            <div class="eyebrow">
+              <span class="tiny-block"></span> SMALL GAME. BIG FLOW.
+            </div>
+            <h1 id="page-title">One more line<span>.</span></h1>
+            <p>A little focus. A few falling blocks. Find your rhythm.</p>
+          </div>
+          <div class="edition">
+            <span class="edition-number">01</span
+            ><span>THE ORIGINAL<br />BLOCK BREAK</span>
+          </div>
+        </section>
+        <section class="arcade" aria-label="Tetris game">
+          <aside class="left-rail" aria-label="Your game stats">
+            <div class="score-card panel">
+              <div class="panel-label">
+                YOUR SCORE <span class="small-spark" aria-hidden="true">✳</span>
+              </div>
+              <div id="score" class="score-value">000000</div>
+              <div class="best-row">
+                <svg class="icon"><use href="#icon-trophy" /></svg
+                ><span>Personal best</span><strong id="best">0</strong>
+              </div>
+            </div>
+            <div class="stats-card panel">
+              <div>
+                <span class="panel-label">LEVEL</span
+                ><strong id="level">01</strong>
+              </div>
+              <span class="stats-divider"></span>
+              <div>
+                <span class="panel-label">LINES</span
+                ><strong id="lines">00</strong>
+              </div>
+              <div class="progress-track"><div id="progress"></div></div>
+              <span id="progress-label" class="progress-caption"
+                >10 lines to level up</span
+              >
+            </div>
+            <div class="hold-card panel">
+              <div class="panel-label">HOLD <kbd>C</kbd></div>
+              <canvas
+                id="hold"
+                width="180"
+                height="90"
+                aria-label="Held piece"
+              ></canvas>
+              <p id="hold-caption">Save a piece for later.</p>
+            </div>
+            <div class="rail-note">
+              <span aria-hidden="true">✦</span>
+              <p>Room for a little<br />everyday play.</p>
+            </div>
+          </aside>
+          <div class="board-column">
+            <div class="board-topline">
+              <span
+                ><span id="game-status-dot" class="status-dot"></span
+                ><span id="game-status">READY WHEN YOU ARE</span></span
+              ><span>10 × 20</span>
+            </div>
+            <div class="board-frame" id="board-frame">
+              <canvas
+                id="board"
+                width="600"
+                height="1200"
+                role="img"
+                aria-label="Tetris board, 10 columns by 20 rows. Use arrow keys to move and rotate, and Space to drop."
+              ></canvas>
+              <div class="game-overlay" id="overlay">
+                <div class="overlay-mark">
+                  <svg><use href="#icon-blocks" /></svg>
+                </div>
+                <span class="overlay-eyebrow" id="overlay-eyebrow"
+                  >TAKE A BREATHER. PLAY A LITTLE.</span
+                >
+                <h2 id="overlay-title">Get into<br />the flow.</h2>
+                <p id="overlay-description">
+                  Clear lines. Make space.<br />See how far you can go.
+                </p>
+                <button class="primary-button" id="overlay-action">
+                  <svg class="icon"><use href="#icon-play" /></svg
+                  ><span>Let’s play</span></button
+                ><span class="overlay-hint" id="overlay-hint"
+                  >or press Enter to start</span
+                >
+              </div>
+            </div>
+            <div class="board-toolbar">
+              <button
+                id="pause-button"
+                class="toolbar-button"
+                aria-label="Start game"
+              >
+                <svg class="icon"><use id="pause-icon" href="#icon-play" /></svg
+                ><span id="pause-label">Start game</span><kbd>P</kbd></button
+              ><span class="toolbar-divider"></span
+              ><button
+                id="restart-button"
+                class="icon-button"
+                aria-label="Restart game"
+                title="Restart game"
+              >
+                <svg class="icon"><use href="#icon-reset" /></svg></button
+              ><button
+                id="sound-button"
+                class="icon-button"
+                aria-label="Enable sound"
+                aria-pressed="false"
+                title="Toggle sound"
+              >
+                <svg class="icon">
+                  <use id="sound-icon" href="#icon-muted" />
+                </svg>
+              </button>
+            </div>
+            <div class="touch-controls" aria-label="Touch game controls">
+              <button data-action="hold" aria-label="Hold piece">
+                <svg class="icon"><use href="#icon-hold" /></svg></button
+              ><button data-action="left" aria-label="Move left">
+                <svg class="icon"><use href="#icon-arrow" /></svg></button
+              ><button data-action="rotate" aria-label="Rotate clockwise">
+                <svg class="icon"><use href="#icon-rotate" /></svg></button
+              ><button data-action="right" aria-label="Move right">
+                <svg class="icon flip"><use href="#icon-arrow" /></svg></button
+              ><button data-action="down" aria-label="Soft drop">
+                <svg class="icon down-arrow">
+                  <use href="#icon-arrow" />
+                </svg></button
+              ><button data-action="drop" aria-label="Hard drop">
+                <svg class="icon"><use href="#icon-drop" /></svg>
+              </button>
+            </div>
+          </div>
+          <aside class="right-rail" aria-label="Next pieces and controls">
+            <div class="next-card panel">
+              <div class="panel-label">
+                UP NEXT <span class="queue-count">03</span>
+              </div>
+              <canvas
+                id="next"
+                width="180"
+                height="210"
+                aria-label="Next three pieces"
+              ></canvas
+              ><span class="queue-caption">A little look ahead.</span>
+            </div>
+            <div class="mobile-hold panel">
+              <div class="panel-label">HOLD <kbd>C</kbd></div>
+              <canvas
+                id="hold-mobile"
+                width="180"
+                height="80"
+                aria-label="Held piece"
+              ></canvas>
+            </div>
+            <div class="controls-card">
+              <h2>Make your moves.</h2>
+              <dl>
+                <div>
+                  <dt><kbd>←</kbd><kbd>→</kbd></dt>
+                  <dd>Move</dd>
+                </div>
+                <div>
+                  <dt><kbd>↑</kbd></dt>
+                  <dd>Rotate</dd>
+                </div>
+                <div>
+                  <dt><kbd>↓</kbd></dt>
+                  <dd>Soft drop</dd>
+                </div>
+                <div>
+                  <dt><kbd class="wide-key">space</kbd></dt>
+                  <dd>Hard drop</dd>
+                </div>
+                <div>
+                  <dt><kbd>C</kbd></dt>
+                  <dd>Hold piece</dd>
+                </div>
+                <div>
+                  <dt><kbd>P</kbd></dt>
+                  <dd>Take a pause</dd>
+                </div>
+              </dl>
+            </div>
+            <button class="settings-button" id="settings-button">
+              <svg class="icon"><use href="#icon-settings" /></svg> Make it
+              yours <span aria-hidden="true">↗</span>
+            </button>
+            <button class="text-button scores-button" id="scores-button">
+              <svg class="icon"><use href="#icon-trophy" /></svg> High scores
+              <span aria-hidden="true">↗</span>
+            </button>
+          </aside>
+        </section>
+        <div class="below-game">
+          <span class="tip-label">A SMALL TIP</span>
+          <p id="tip">
+            Keep your stack low and leave a little room to breathe.
+          </p>
+          <span class="tip-decoration" aria-hidden="true">▥</span>
+        </div>
+        <p id="announcer" class="sr-only" role="status" aria-live="polite"></p>
+      </main>
+      <footer>
+        <span>Built for the joy of it.</span
+        ><span>NO DOWNLOADS. JUST BLOCKS.</span
+        ><a
+          href="https://github.com/A1Reza/tetris-game-java"
+          target="_blank"
+          rel="noopener noreferrer"
+          ><svg class="icon"><use href="#icon-github" /></svg
+          ><span>Open source, always <span aria-hidden="true">↗</span></span></a
+        >
+      </footer>
+    </div>
+    <dialog id="settings-dialog" aria-labelledby="settings-title">
+      <div class="dialog-heading">
+        <div>
+          <span class="eyebrow">YOUR KIND OF FLOW</span>
+          <h2 id="settings-title">Make it yours.</h2>
+        </div>
+        <button class="icon-button close-dialog" aria-label="Close settings">
+          <svg class="icon"><use href="#icon-close" /></svg>
+        </button>
+      </div>
+      <form id="settings-form">
+        <label class="setting-row" for="start-level"
+          ><span
+            ><strong>Starting level</strong
+            ><small>A faster start, if you fancy it.</small></span
+          ><select id="start-level" name="level">
+            <option>1</option>
+            <option>2</option>
+            <option>3</option>
+            <option>4</option>
+            <option>5</option>
+            <option>6</option>
+            <option>7</option>
+            <option>8</option>
+            <option>9</option>
+            <option>10</option>
+          </select></label
+        ><label class="setting-row" for="ghost-setting"
+          ><span
+            ><strong>Ghost piece</strong
+            ><small>A preview of where your piece will land.</small></span
+          ><input type="checkbox" id="ghost-setting" checked /></label
+        ><label class="setting-row" for="sound-setting"
+          ><span
+            ><strong>Sound effects</strong
+            ><small>A little feedback with every drop.</small></span
+          ><input type="checkbox" id="sound-setting"
+        /></label>
+        <p class="dialog-note">
+          Starting level applies to your next game. Settings and scores stay in
+          this browser.
+        </p>
+        <button class="primary-button" type="submit">
+          Save preferences <span aria-hidden="true">↗</span>
+        </button>
+      </form>
+    </dialog>
+    <dialog id="scores-dialog" aria-labelledby="scores-title">
+      <div class="dialog-heading">
+        <div>
+          <span class="eyebrow">YOUR PERSONAL HALL OF FAME</span>
+          <h2 id="scores-title">Good things stack up.</h2>
+        </div>
+        <button class="icon-button close-dialog" aria-label="Close high scores">
+          <svg class="icon"><use href="#icon-close" /></svg>
+        </button>
+      </div>
+      <ol id="scores-list"></ol>
+      <p class="dialog-note">Your top 10 games, saved on this device.</p>
+    </dialog>
+    <dialog id="restart-dialog" aria-labelledby="restart-title">
+      <div class="dialog-heading">
+        <div>
+          <span class="eyebrow">A CLEAN SLATE</span>
+          <h2 id="restart-title">Start fresh?</h2>
+        </div>
+        <button class="icon-button close-dialog" aria-label="Cancel restart">
+          <svg class="icon"><use href="#icon-close" /></svg>
+        </button>
+      </div>
+      <p>Your current game will end. A new stack of possibilities awaits.</p>
+      <div class="dialog-actions">
+        <button class="secondary-button close-dialog">Keep playing</button
+        ><button class="primary-button" id="confirm-restart">
+          New game <svg class="icon"><use href="#icon-reset" /></svg>
+        </button>
+      </div>
+    </dialog>
+  </body>
+</html>

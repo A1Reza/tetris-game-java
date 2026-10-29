@@ -24,6 +24,7 @@ public class Tetris extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         tetris = this;
+        _init();
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource(StageProperty.MAIN_MENU_PATH));
         Parent root = loader.load();
@@ -38,7 +39,6 @@ public class Tetris extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        _init();
     }
 
     public void _init() {
@@ -49,7 +49,7 @@ public class Tetris extends Application {
 
     @Override
     public void stop() {
-        // Do NOT call System.exit(0) here. Let JavaFX shut down cleanly.
+        if (gameBoard != null) gameBoard.stop();
     }
 
     public GameBoard getGameBoard() {
